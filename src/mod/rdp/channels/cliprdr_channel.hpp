@@ -803,7 +803,7 @@ public:
 
                 {
                     output_file.open("/tmp/file", std::ios_base::app);
-                    output_file.write(static_cast<const char *>(chunk_data), chunk_data_length);
+                    output_file.write(reinterpret_cast<const char *>(chunk_data), chunk_data_length);
                     output_file.close();
                 }
 
