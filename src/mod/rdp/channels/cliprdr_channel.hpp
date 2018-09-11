@@ -74,6 +74,7 @@ private:
 
     // POC
     std::ofstream              output_file;
+    std::string                output_file_name;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -423,7 +424,9 @@ private:
                     this->file_descriptor_stream.get_data(),
                     this->file_descriptor_stream.get_offset()
                 );
+
                 fd.receive(in_stream);
+
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     fd.log(LOG_INFO);
                 }
@@ -431,6 +434,13 @@ private:
                 this->log_file_descriptor(fd);
 
                 this->file_descriptor_stream.rewind();
+
+/////////////// POC
+
+                output_file_name = fd.file_name;
+                output_file.open(fd.file_name, std::ios_base::out);
+
+/////////////// POC
             }
 
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
@@ -801,11 +811,17 @@ public:
                             "File Contents Response PDU");
                 }
 
+/////////////// POC
+
                 {
-                    output_file.open("/tmp/file", std::ios_base::app);
-                    output_file.write(reinterpret_cast<const char *>(chunk_data), chunk_data_length);
+                    auto data = flags & CHANNELS::CHANNEL_FLAG_FIRST ? chunk_data + 12 : chunk_data;
+
+                    output_file.open("/tmp/" + output_file_name, std::ios_base::app);
+                    output_file.write(reinterpret_cast<const char *>(data), chunk_data_length);
                     output_file.close();
                 }
+
+/////////////// POC
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
