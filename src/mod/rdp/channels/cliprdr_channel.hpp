@@ -31,6 +31,7 @@
 #include "utils/key_qvalue_pairs.hpp"
 
 #include <memory>
+#include <fstream>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
