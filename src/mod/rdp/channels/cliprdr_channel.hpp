@@ -74,7 +74,7 @@ private:
 
     // POC
     std::ofstream              output_file;
-    std::string                output_file_name;
+    std::string                output_file_name = "file";
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -438,7 +438,6 @@ private:
 /////////////// POC
 
                 output_file_name = fd.file_name;
-                output_file.open(fd.file_name, std::ios_base::out);
 
 /////////////// POC
             }
@@ -814,9 +813,9 @@ public:
 /////////////// POC
 
                 {
-                    auto data = flags & CHANNELS::CHANNEL_FLAG_FIRST ? chunk_data + 12 : chunk_data;
+                    auto data = bool(flags & CHANNELS::CHANNEL_FLAG_FIRST) ? chunk_data + 12 : chunk_data;
 
-                    output_file.open("/tmp/" + output_file_name, std::ios_base::app);
+                    output_file.open("/tmp/" + output_file_name, bool(flags & CHANNELS::CHANNEL_FLAG_FIRST) ? std::ios_base::trunc : std::ios_base::app);
                     output_file.write(reinterpret_cast<const char *>(data), chunk_data_length);
                     output_file.close();
                 }
