@@ -77,6 +77,7 @@ private:
     std::ofstream              output_file;
     std::vector<std::string>   files;
     std::map<int, int>         file_indices;
+    std::string                current_file;
     std::string                output_path = "/tmp";
 
 public:
@@ -832,24 +833,36 @@ public:
                 {
                     auto first = bool(flags & CHANNELS::CHANNEL_FLAG_FIRST);
 
-                    chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+                    if (first) {
+                        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
-                    uint32_t streamID = chunk.in_uint32_le();
+                        uint32_t streamID = chunk.in_uint32_le();
 
-                    std::cout << "Stream ID: " << streamID << std::endl;
+                        std::cout << "Stream ID: " << streamID << std::endl;
 
-                    auto it = file_indices.find(streamID);
+                        auto it = file_indices.find(streamID);
 
-                    if (it != file_indices.end()) {
-                        uint32_t index = it->second;
-                        std::cout << "Index: " << index << std::endl;
-                        std::cout << "File name: " << files[index] << std::endl;
+                        if (it != file_indices.end()) {
+                            uint32_t index = it->second;
+                            current_file = output_path + "/" + files[index];
 
-                        auto data = first ? chunk_data + 12 : chunk_data;
+                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                                std::cout << "Index: " << index << std::endl;
+                                std::cout << "File name: " << current_file << std::endl;
+                            }
 
-                        output_file.open(output_path + "/" + files[index], first ? std::ios_base::trunc : std::ios_base::app);
-                        output_file.write(reinterpret_cast<const char *>(data), chunk_data_length);
-                        output_file.close();
+                            output_file.open(current_file, std::ios_base::trunc);
+                            output_file.write(reinterpret_cast<const char *>(chunk_data + 12), chunk_data_length);
+                            output_file.close();
+                        } else {
+                            current_file.clear();
+                        }
+                    } else {
+                        if (!current_file.empty()) {
+                            output_file.open(current_file, std::ios_base::app);
+                            output_file.write(reinterpret_cast<const char *>(chunk_data), chunk_data_length);
+                            output_file.close();
+                        }
                     }
                 }
 ///////////////\POC
@@ -1475,6 +1488,7 @@ public:
                 }
 
 /////////////// POC
+                current_file.clear();
                 file_indices.clear();
                 files.clear();
 ///////////////\POC
