@@ -832,11 +832,7 @@ public:
                 {
                     auto first = bool(flags & CHANNELS::CHANNEL_FLAG_FIRST);
 
-                    if (first) {
-                        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
-                    } else {
-                        chunk.in_skip_bytes(8); // msgType(2) + msgFlags(2) + dataLen(4)
-                    }
+                    chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
                     uint32_t streamID = chunk.in_uint32_le();
 
