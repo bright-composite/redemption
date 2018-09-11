@@ -40,3 +40,9 @@ password.py
 /src/GRTAGS
 /src/GSYMS
 /src/GTAGS
+
+/src/.vs
+/doxy
+Doxyfile
+/.vscode
+*.pyo

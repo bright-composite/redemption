@@ -216,6 +216,7 @@ class ACLPassthrough():
         kv[u'target_port'] = "3389"
         kv[u'session_id'] = "0000"
         kv[u'module'] = "RDP"
+        kv[u'is_rec'] = "True"
         kv[u'mode_console'] = u"allow"
         kv[u'target_password'] = self.shared.get(u'target_password')
         kv[u'target_login'] = self.shared.get(u'target_login')

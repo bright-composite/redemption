@@ -71,6 +71,9 @@ private:
     size_t                     first_client_format_list_pdu_length = 0;
     uint32_t                   first_client_format_list_pdu_flags  = 0;
 
+    // POC
+    std::ofstream              output_file;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -795,6 +798,12 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "File Contents Response PDU");
+                }
+
+                {
+                    output_file.open("/tmp/file", ios_base::app);
+                    output_file.write(chunk_data, chunk_data_length);
+                    output_file.close();
                 }
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
