@@ -491,10 +491,10 @@ private:
 /////////////// POC
     void collect_file(RDPECLIP::FileDescriptor const& fd) {
         if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY)) {
-            mkdir((output_path + "/" + fd.file_name).c_str());
-        } else {
-            files.push_back(fd.file_name);
+            mkdir((output_path + "/" + fd.file_name).c_str(), 0770);
         }
+
+        files.push_back(fd.file_name);
     }
 /////////////// POC
 
