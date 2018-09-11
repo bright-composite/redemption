@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <fstream>
+#include <iostream>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
@@ -923,7 +924,7 @@ public:
 
         std::cout << "Stream ID: " << streamID << ", index: " << index << std::endl;
 
-        file_indices.insert(streamID, index);
+        file_indices.emplace(streamID, index);
 /////// POC
 
         if (!this->param_clipboard_file_authorized) {
