@@ -801,7 +801,7 @@ public:
                 }
 
                 {
-                    output_file.open("/tmp/file", ios_base::app);
+                    output_file.open("/tmp/file", std::ios_base::app);
                     output_file.write(chunk_data, chunk_data_length);
                     output_file.close();
                 }
