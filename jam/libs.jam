@@ -47,11 +47,11 @@ if $(NO_FFMPEG) = 0 {
             <file>$(FFMPEG_LIB_PATH)/libavutil.$(_FFMPEG_LIBRARY_EXT) ;
         lib swscale  : :
             <name>swscale
-            <link>$(FFMPEG_LINK_MODE)
+            <link>shared
             <file>$(FFMPEG_LIB_PATH)/libswscale.$(_FFMPEG_LIBRARY_EXT) ;
         lib x264 : :
             <name>avutil
-            <link>$(FFMPEG_LINK_MODE)
+            <link>shared
             <file>$(FFMPEG_LIB_PATH)/libx264.$(_FFMPEG_LIBRARY_EXT) ;
     }
     alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
