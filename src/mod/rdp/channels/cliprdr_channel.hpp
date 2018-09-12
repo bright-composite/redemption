@@ -879,24 +879,28 @@ public:
                 }
             break;
 
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "File Contents Response PDU");
                 }
 
+                auto size = bool(flags & CHANNELS::CHANNEL_FLAG_LAST) ? chunk_data_length - 4 : chunk_data_length;
+
                 if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
                     chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
                     uint32_t streamID = chunk.in_uint32_le();
-                    this->client_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 16);
+                    this->client_file_capture.start_stream(streamID, chunk_data + 12, size - 12);
 
                     this->update_exchanged_data(total_length);
                 } else {
-                    this->client_file_capture.write(chunk_data, chunk_data_length);
+                    this->client_file_capture.write(chunk_data, size);
                 }
-            break;
+
+                break;
+            }
 
             default:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -1494,24 +1498,28 @@ public:
                         total_length, flags, chunk);
             break;
 
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "File Contents Response PDU");
                 }
 
+                auto size = bool(flags & CHANNELS::CHANNEL_FLAG_LAST) ? chunk_data_length - 4 : chunk_data_length;
+
                 if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
                     chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
                     uint32_t streamID = chunk.in_uint32_le();
-                    this->server_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 16);
+                    this->server_file_capture.start_stream(streamID, chunk_data + 12, size - 12);
 
                     this->update_exchanged_data(total_length);
                 } else {
-                    this->server_file_capture.write(chunk_data, chunk_data_length);
+                    this->server_file_capture.write(chunk_data, size);
                 }
-            break;
+
+                break;
+            }
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
