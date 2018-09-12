@@ -173,7 +173,7 @@ public:
 
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
-    , client_file_capture("/tmp/capture/host-" + params.host + "/target-" + params.target_device + "/session-" + params.session_id + "/outgoing"),
+    , client_file_capture("/tmp/capture/host-" + params.host + "/target-" + params.target_device + "/session-" + params.session_id + "/outgoing")
     , server_file_capture("/tmp/capture/host-" + params.host + "/target-" + params.target_device + "/session-" + params.session_id + "/incoming") {
     }
 
