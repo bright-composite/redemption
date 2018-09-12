@@ -50,7 +50,7 @@ public:
 
     void add_file(RDPECLIP::FileDescriptor const& fd) {
         if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY)) {
-            mkdir((output_path + "/" + fd.file_name).c_str(), 0770);
+            std::filesystem::create_directories(output_path + "/" + fd.file_name);
         }
 
         auto path = fd.file_name;
