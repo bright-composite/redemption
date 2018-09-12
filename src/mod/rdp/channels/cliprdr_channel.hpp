@@ -890,7 +890,7 @@ public:
                     chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
                     uint32_t streamID = chunk.in_uint32_le();
-                    this->client_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 12);
+                    this->client_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 16);
 
                     this->update_exchanged_data(total_length);
                 } else {
@@ -1505,7 +1505,7 @@ public:
                     chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
                     uint32_t streamID = chunk.in_uint32_le();
-                    this->server_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 12);
+                    this->server_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 16);
 
                     this->update_exchanged_data(total_length);
                 } else {
