@@ -95,7 +95,7 @@ private:
     std::vector<std::string>   file_names;
     std::map<int, int>         file_indices;
     std::string                output_path = "/tmp";
-}
+};
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
