@@ -39,6 +39,7 @@
 
 class FileCapture
 {
+public:
     void reset() {
         current_file_name.clear();
         file_indices.clear();
