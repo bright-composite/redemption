@@ -49,12 +49,13 @@ public:
     }
 
     void add_file(RDPECLIP::FileDescriptor const& fd) {
-        if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY)) {
-            std::filesystem::create_directories(output_path + "/" + fd.file_name);
-        }
-
         auto path = fd.file_name;
         std::replace(path.begin(), path.end(), '\\', '/');
+
+        if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY) && !std::filesystem::exists(output_path + "/" + path)) {
+            std::filesystem::create_directories(output_path + "/" + path);
+        }
+
         file_names.push_back(path);
     }
 
