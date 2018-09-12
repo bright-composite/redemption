@@ -50,7 +50,7 @@ if $(NO_FFMPEG) = 0 {
             <link>shared
             <file>$(FFMPEG_LIB_PATH)/libswscale.$(_FFMPEG_LIBRARY_EXT) ;
         lib x264 : :
-            <name>avutil
+            <name>x264
             <link>shared
             <file>$(FFMPEG_LIB_PATH)/libx264.$(_FFMPEG_LIBRARY_EXT) ;
     }
