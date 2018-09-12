@@ -12,7 +12,7 @@ exe rdpproxy :
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
-  <library>stdc++fs
+  <library>stdcxxfs
   <library>png
   <library>ppocr
   <library>program_options
