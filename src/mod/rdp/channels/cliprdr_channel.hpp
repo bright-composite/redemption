@@ -97,7 +97,7 @@ private:
     static std::string         output_path;
 }
 
-static std::string FileCapture::output_path = "/tmp";
+std::string FileCapture::output_path = "/tmp";
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
