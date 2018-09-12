@@ -37,6 +37,67 @@
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
+class FileCapture
+{
+    void reset() {
+        current_file_name.clear();
+        file_indices.clear();
+        file_names.clear();
+    }
+
+    void add_file(RDPECLIP::FileDescriptor const& fd) {
+        if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY)) {
+            mkdir((output_path + "/" + fd.file_name).c_str(), 0770);
+        }
+
+        auto path = fd.file_name;
+        std::replace(path.begin(), path.end(), '\\', '/');
+        file_names.push_back(path);
+    }
+
+    void assign_stream(int index, int streamID) {
+        file_indices.emplace(streamID, index);
+    }
+
+    void start_stream(int streamID, const uint8_t * data, size_t size) {
+        auto it = file_indices.find(streamID);
+
+        if (it != file_indices.end()) {
+            uint32_t index = it->second;
+            current_file_name = output_path + "/" + file_names[index];
+
+            output_file.open(current_file_name, std::ios_base::trunc);
+            output_file.write(reinterpret_cast<const char *>(data), size);
+            output_file.close();
+        } else {
+            current_file_name.clear();
+        }
+    }
+
+    void write(const uint8_t * data, size_t size) {
+        if (current_file_name.empty()) {
+            return;
+        }
+
+        output_file.open(current_file_name, std::ios_base::app);
+        output_file.write(reinterpret_cast<const char *>(data), size);
+        output_file.close();
+    }
+
+    void end_stream() {
+
+    }
+
+private:
+    std::ofstream              output_file;
+    std::string                current_file_name;
+    std::vector<std::string>   file_names;
+    std::map<int, int>         file_indices;
+    static std::string         output_path;
+}
+
+static std::string FileCapture::output_path = "/tmp";
+
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
@@ -74,12 +135,8 @@ private:
     size_t                     first_client_format_list_pdu_length = 0;
     uint32_t                   first_client_format_list_pdu_flags  = 0;
 
-    // PoC
-    std::ofstream              output_file;
-    std::vector<std::string>   files;
-    std::map<int, int>         file_indices;
-    std::string                current_file;
-    std::string                output_path = "/tmp";
+    FileCapture                client_file_capture;
+    FileCapture                server_file_capture;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -224,7 +281,13 @@ private:
     {
         (void)total_length;
         (void)flags;
-        (void)chunk;
+
+        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+
+        uint32_t streamID = chunk.in_uint32_le();
+        uint32_t index = chunk.in_uint32_le();
+
+        this->server_file_capture.assign_stream(index, streamID);
 
         if (!this->param_clipboard_file_authorized) {
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -440,9 +503,7 @@ private:
 
                 this->file_descriptor_stream.rewind();
 
-/////////////// PoC
-                this->collect_file(fd);
-///////////////\PoC
+                this->client_file_capture.add_file(fd);
             }
 
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
@@ -464,9 +525,7 @@ private:
 
                 this->log_file_descriptor(fd);
 
-/////////////// PoC
-                this->collect_file(fd);
-///////////////\PoC
+                this->client_file_capture.add_file(fd);
             }
 
             if (chunk.in_remain()) {
@@ -489,19 +548,6 @@ private:
     }   // process_client_format_data_response_pdu
 
 private:
-
-/////////////// PoC
-    void collect_file(RDPECLIP::FileDescriptor const& fd) {
-        if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY)) {
-            mkdir((output_path + "/" + fd.file_name).c_str(), 0770);
-        }
-
-        auto path = fd.file_name;
-        std::replace(path.begin(), path.end(), '\\', '/');
-        files.push_back(path);
-    }
-///////////////\PoC
-
     void log_file_descriptor(RDPECLIP::FileDescriptor const& fd)
     {
         auto const file_size_str = std::to_string(fd.file_size());
@@ -789,6 +835,8 @@ public:
                             "Format Data Request PDU");
                 }
 
+                this->server_file_capture.reset();
+
                 send_message_to_server =
                     this->process_client_format_data_request_pdu(
                         total_length, flags, chunk);
@@ -830,57 +878,15 @@ public:
                             "File Contents Response PDU");
                 }
 
-/////////////// PoC
-                {
-                    auto first = bool(flags & CHANNELS::CHANNEL_FLAG_FIRST);
+                if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
-                    if (first) {
-                        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+                    uint32_t streamID = chunk.in_uint32_le();
+                    this->client_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 12);
 
-                        uint32_t streamID = chunk.in_uint32_le();
-
-                        // if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        //     std::cout << "Stream ID: " << streamID << std::endl;
-                        // }
-
-                        auto it = file_indices.find(streamID);
-
-                        if (it != file_indices.end()) {
-                            uint32_t index = it->second;
-                            current_file = output_path + "/" + files[index];
-
-                            // if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            //     std::cout << "Index: " << index << std::endl;
-                            //     std::cout << "File name: " << current_file << std::endl;
-                            // }
-
-                            output_file.open(current_file, std::ios_base::trunc);
-                            output_file.write(reinterpret_cast<const char *>(chunk_data + 12), chunk_data_length);
-                            output_file.close();
-                        } else {
-                            current_file.clear();
-                        }
-                    } else {
-                        if (!current_file.empty()) {
-                            output_file.open(current_file, std::ios_base::app);
-                            output_file.write(reinterpret_cast<const char *>(chunk_data), chunk_data_length);
-
-                            if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-                                auto file_size = output_file.tellp(); //std::filesystem::file_size(current_file);
-
-                                if (file_size != total_length - 12) {
-                                    std::cerr << "Incorrect file size: " << file_size << ", expected " << (total_length - 12) << std::endl;
-                                }
-                            }
-
-                            output_file.close();
-                        }
-                    }
-                }
-///////////////\PoC
-
-                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
+                } else {
+                    this->client_file_capture.write(chunk_data, chunk_data_length);
                 }
             break;
 
@@ -944,18 +950,12 @@ public:
         (void)total_length;
         (void)flags;
 
-/////// PoC
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         uint32_t streamID = chunk.in_uint32_le();
         uint32_t index = chunk.in_uint32_le();
 
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            std::cout << "Stream ID: " << streamID << ", index: " << index << std::endl;
-        }
-
-        file_indices.emplace(streamID, index);
-///////\PoC
+        this->client_file_capture.assign_stream(index, streamID);
 
         if (!this->param_clipboard_file_authorized) {
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -1159,6 +1159,8 @@ public:
                 }
 
                 this->file_descriptor_stream.rewind();
+
+                this->server_file_capture.add_file(fd);
             }
 
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
@@ -1190,6 +1192,8 @@ public:
 
                     this->front.session_update(message);
                 }
+
+                this->server_file_capture.add_file(fd);
             }
 
             if (chunk.in_remain()) {
@@ -1489,8 +1493,15 @@ public:
                             "File Contents Response PDU");
                 }
 
-                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+
+                    uint32_t streamID = chunk.in_uint32_le();
+                    this->server_file_capture.start_stream(streamID, chunk_data + 12, chunk_data_length - 12);
+
                     this->update_exchanged_data(total_length);
+                } else {
+                    this->server_file_capture.write(chunk_data, chunk_data_length);
                 }
             break;
 
@@ -1501,11 +1512,7 @@ public:
                             "Format Data Request PDU");
                 }
 
-/////////////// PoC
-                current_file.clear();
-                file_indices.clear();
-                files.clear();
-///////////////\PoC
+                this->client_file_capture.reset();
 
                 send_message_to_client =
                     this->process_server_format_data_request_pdu(
