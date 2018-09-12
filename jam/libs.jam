@@ -57,8 +57,9 @@ if $(NO_FFMPEG) = 0 {
 
     lib x264 : : <name>x264 <link>shared ;
     lib va : : <name>va ;
+    lib rt : : <name>rt ;
 
-    alias ffmpeg : pthread avcodec avformat swscale swresample x264 va avutil bz2 png z dl ;
+    alias ffmpeg : pthread avcodec avformat swscale swresample x264 va rt avutil bz2 png z dl ;
 
     lib pthread : : <name>pthread <link>shared ;
 }
