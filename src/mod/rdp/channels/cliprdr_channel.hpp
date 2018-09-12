@@ -33,6 +33,7 @@
 #include <memory>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
@@ -73,7 +74,7 @@ private:
     size_t                     first_client_format_list_pdu_length = 0;
     uint32_t                   first_client_format_list_pdu_flags  = 0;
 
-    // POC
+    // PoC
     std::ofstream              output_file;
     std::vector<std::string>   files;
     std::map<int, int>         file_indices;
@@ -439,9 +440,9 @@ private:
 
                 this->file_descriptor_stream.rewind();
 
-/////////////// POC
+/////////////// PoC
                 this->collect_file(fd);
-///////////////\POC
+///////////////\PoC
             }
 
             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
@@ -463,9 +464,9 @@ private:
 
                 this->log_file_descriptor(fd);
 
-/////////////// POC
+/////////////// PoC
                 this->collect_file(fd);
-///////////////\POC
+///////////////\PoC
             }
 
             if (chunk.in_remain()) {
@@ -489,7 +490,7 @@ private:
 
 private:
 
-/////////////// POC
+/////////////// PoC
     void collect_file(RDPECLIP::FileDescriptor const& fd) {
         if (bool(fd.fileAttributes & fscc::FILE_ATTRIBUTE_DIRECTORY)) {
             mkdir((output_path + "/" + fd.file_name).c_str(), 0770);
@@ -499,7 +500,7 @@ private:
         std::replace(path.begin(), path.end(), '\\', '/');
         files.push_back(path);
     }
-///////////////\POC
+///////////////\PoC
 
     void log_file_descriptor(RDPECLIP::FileDescriptor const& fd)
     {
@@ -829,7 +830,7 @@ public:
                             "File Contents Response PDU");
                 }
 
-/////////////// POC
+/////////////// PoC
                 {
                     auto first = bool(flags & CHANNELS::CHANNEL_FLAG_FIRST);
 
@@ -838,7 +839,9 @@ public:
 
                         uint32_t streamID = chunk.in_uint32_le();
 
-                        std::cout << "Stream ID: " << streamID << std::endl;
+                        // if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        //     std::cout << "Stream ID: " << streamID << std::endl;
+                        // }
 
                         auto it = file_indices.find(streamID);
 
@@ -846,10 +849,10 @@ public:
                             uint32_t index = it->second;
                             current_file = output_path + "/" + files[index];
 
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                std::cout << "Index: " << index << std::endl;
-                                std::cout << "File name: " << current_file << std::endl;
-                            }
+                            // if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                            //     std::cout << "Index: " << index << std::endl;
+                            //     std::cout << "File name: " << current_file << std::endl;
+                            // }
 
                             output_file.open(current_file, std::ios_base::trunc);
                             output_file.write(reinterpret_cast<const char *>(chunk_data + 12), chunk_data_length);
@@ -861,11 +864,20 @@ public:
                         if (!current_file.empty()) {
                             output_file.open(current_file, std::ios_base::app);
                             output_file.write(reinterpret_cast<const char *>(chunk_data), chunk_data_length);
+
+                            if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+                                auto file_size = output_file.tellp(); //std::filesystem::file_size(current_file);
+
+                                if (file_size != total_length - 12) {
+                                    std::cerr << "Incorrect file size: " << file_size << ", expected " << (total_length - 12) << std::endl;
+                                }
+                            }
+
                             output_file.close();
                         }
                     }
                 }
-///////////////\POC
+///////////////\PoC
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
@@ -932,16 +944,18 @@ public:
         (void)total_length;
         (void)flags;
 
-/////// POC
+/////// PoC
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         uint32_t streamID = chunk.in_uint32_le();
         uint32_t index = chunk.in_uint32_le();
 
-        std::cout << "Stream ID: " << streamID << ", index: " << index << std::endl;
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            std::cout << "Stream ID: " << streamID << ", index: " << index << std::endl;
+        }
 
         file_indices.emplace(streamID, index);
-///////\POC
+///////\PoC
 
         if (!this->param_clipboard_file_authorized) {
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -1487,11 +1501,11 @@ public:
                             "Format Data Request PDU");
                 }
 
-/////////////// POC
+/////////////// PoC
                 current_file.clear();
                 file_indices.clear();
                 files.clear();
-///////////////\POC
+///////////////\PoC
 
                 send_message_to_client =
                     this->process_server_format_data_request_pdu(
