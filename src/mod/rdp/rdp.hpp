@@ -1281,6 +1281,10 @@ protected:
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
 
+        clipboard_virtual_channel_params.host = this->vars.get<cfg::globals::host>();
+        clipboard_virtual_channel_params.target_device = this->vars.get<cfg::globals::target_device>();
+        clipboard_virtual_channel_params.session_id = this->vars.get<cfg::context::session_id>();
+
         return clipboard_virtual_channel_params;
     }
 

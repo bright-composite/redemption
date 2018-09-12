@@ -40,6 +40,8 @@
 class FileCapture
 {
 public:
+    FileCapture(const std::string & output_path) : output_path(output_path) {}
+
     void reset() {
         current_file_name.clear();
         file_indices.clear();
@@ -94,7 +96,7 @@ private:
     std::string                current_file_name;
     std::vector<std::string>   file_names;
     std::map<int, int>         file_indices;
-    std::string                output_path = "/tmp";
+    std::string                output_path;
 };
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
@@ -146,6 +148,10 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
+        std::string host;
+        std::string target_device;
+        std::string session_id;
+
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)
         {}
@@ -166,7 +172,9 @@ public:
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
 
     , front(front)
-    , proxy_managed(to_client_sender_ == nullptr) {
+    , proxy_managed(to_client_sender_ == nullptr)
+    , client_file_capture("/tmp/capture/host-" + params.host + "/target-" + params.target_device + "/session-" + params.session_id + "/outgoing"),
+    , server_file_capture("/tmp/capture/host-" + params.host + "/target-" + params.target_device + "/session-" + params.session_id + "/incoming") {
     }
 
 protected:
