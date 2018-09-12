@@ -99,7 +99,7 @@ sys_lib_assoc = dict((
     ('gssapi/gssapi.h', '<library>gssapi_krb5'),
     ('snappy-c.h', '<library>snappy'),
     ('zlib.h', '<library>z'),
-    ('filesystem', '<library>stdc++fs'),
+    ('filesystem', '<library>stdcxxfs'),
 ))
 sys_lib_prefix = (
     ('libavformat/', '<library>ffmpeg'),
