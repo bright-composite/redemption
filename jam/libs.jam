@@ -13,6 +13,8 @@ lib snappy : : <name>snappy <link>shared ;
 lib dl : : <name>dl <link>shared ;
 lib bz2 : : <name>bz2 <link>shared ;
 
+lib stdcxxfs : : <name> <link>static ;
+
 ## ffmpeg {
 if $(NO_FFMPEG) = 0 {
     if $(FFMPEG_LIB_PATH) = "" {

@@ -5,6 +5,7 @@ add_lib krb5 ;
 add_lib openssl ;
 add_lib png ;
 add_lib snappy ;
+add_lib stdcxxfs ;
 add_src capture/file_to_graphic.cpp ;
 add_src core/RDP/mppc.cpp ;
 add_src core/RDP/nego.cpp ;
