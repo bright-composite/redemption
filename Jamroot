@@ -164,7 +164,7 @@ constant LIB_DEPENDENCIES :
     <cxxflags>-fPIC
     <variant>release:<cxxflags>-fvisibility=hidden
     <link>shared
-    <linkflags>-Wl,-Bsymbolic
+    <linkflags>-Wl,-Bsymbolic -lstdc++fs
     $(GCOV_NO_BUILD)
 ;
 
