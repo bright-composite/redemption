@@ -4,6 +4,7 @@
 
 # uses ccache with gcc
 using gcc : : ccache g++ : <cxxflags>-fdiagnostics-color=always ;
+using gcc : 4.7 : ccache g++-4.7 : <cxxflags>-fdiagnostics-color=always ;
 using gcc : 4.9 : ccache g++-4.9 : <cxxflags>-fdiagnostics-color=always ;
 using gcc : 6.0 : ccache /usr/lib/gcc-snapshot/bin/g++ : <cxxflags>-fdiagnostics-color=always ;
 
